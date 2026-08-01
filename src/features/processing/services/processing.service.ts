@@ -1,6 +1,7 @@
 import { AppConfig } from '@/config/app.config'
 import { bookStorage } from '@/features/library/services/bookStorage'
 import type { BookStatus, ProcessingState } from '@/features/library/types/book'
+import { transcriptService } from '@/features/transcript/services/transcript.service'
 
 type ProgressListener = (state: ProcessingState) => void
 
@@ -68,13 +69,22 @@ class ProcessingService {
       await this.updateStage(bookId, 'extracting', 20, 'Text extraction complete', startedAt)
       await this.delay(800)
 
-      // Stage 2: Initial Synchronization (20 - 50%)
+      // Stage 2: Generate Transcript (20 - 40%)
+      const transcriptMsg = isDev
+        ? `Generating transcript (Dev Mode: Max ${AppConfig.maxAudioMinutes}m audio)…`
+        : 'Generating transcript with timestamps…'
+      await this.updateStage(bookId, 'generating_transcript', 25, transcriptMsg, startedAt)
+      await transcriptService.generateTranscript(book)
+      await this.updateStage(bookId, 'generating_transcript', 40, '✓ Transcript generated & cached', startedAt)
+      await this.delay(800)
+
+      // Stage 3: Initial Synchronization (40 - 60%)
       const syncMsg = isDev
         ? `Initial synchronization (Dev Mode: Max ${AppConfig.maxAudioMinutes}m audio)…`
         : 'Performing initial synchronization…'
-      await this.updateStage(bookId, 'initial_sync', 35, syncMsg, startedAt)
+      await this.updateStage(bookId, 'initial_sync', 50, syncMsg, startedAt)
       await this.delay(1000)
-      await this.updateStage(bookId, 'initial_sync', 50, 'Initial synchronization ready', startedAt)
+      await this.updateStage(bookId, 'initial_sync', 60, 'Initial synchronization ready', startedAt)
       await this.delay(800)
 
       // Stage 3: Audio Anchors (50 - 75%)

@@ -7,6 +7,7 @@ import { TextExtractionError } from '@/features/reader/components/TextExtraction
 import { TextReader } from '@/features/reader/components/TextReader'
 import { TextReaderLoading } from '@/features/reader/components/TextReaderLoading'
 import { bookStorage } from '@/features/library/services/bookStorage'
+import { bookStorageService } from '@/features/library/services/bookStorage.service'
 import type { Book } from '@/features/library/types/book'
 import { ProcessingBanner } from '@/features/processing/components/ProcessingBanner'
 import { useReaderStore } from '@/store/readerStore'
@@ -44,9 +45,15 @@ export default function ReaderPage() {
   const extractText = useCallback(
     async (target: Book) => {
       setIsExtracting(true)
-      const updated = await bookStorage.extractPages(target)
-      setBook(updated)
-      setTotalPages(updated.pages?.length ?? 0)
+      const extractedPages = await bookStorageService.readExtractedPages(target.id)
+      if (extractedPages.length === 0) {
+        const updated = await bookStorage.extractPages(target)
+        await bookStorageService.saveExtractedPages(target.id, updated.pages || [])
+        setBook(updated)
+        setTotalPages(updated.pages?.length ?? 0)
+      } else {
+        setTotalPages(extractedPages.length)
+      }
       setIsExtracting(false)
     },
     [setTotalPages]
@@ -58,13 +65,13 @@ export default function ReaderPage() {
       return
     }
     setIsBookLoading(true)
-    void bookStorage
-      .get(bookId)
+    void bookStorageService
+      .loadBook(bookId)
       .then((result) => {
         setBook(result)
         resetDocument(result?.lastReadPage)
         setTotalPages(result?.pages?.length ?? 0)
-        if (result && !result.pages && !result.extractionError) {
+        if (result && (!result.pages || result.pages.length === 0) && !result.extractionError) {
           void extractText(result)
         }
       })
@@ -77,7 +84,7 @@ export default function ReaderPage() {
   return (
     <div className={`relative flex min-h-screen bg-background ${isFullscreen ? 'p-0 overflow-hidden' : 'pb-36'}`}>
       <div className="flex min-w-0 flex-1 flex-col">
-        {!isFullscreen && <ReaderHeader title={book?.title || 'Loading book…'} author={book?.author} />}
+        {!isFullscreen && <ReaderHeader bookId={book?.id} title={book?.title || 'Loading book…'} author={book?.author} />}
         {!isFullscreen && book && <ProcessingBanner book={book} />}
 
         <main className={`flex min-h-0 flex-1 flex-col ${isFullscreen ? 'p-0' : 'p-4 sm:p-6'}`}>

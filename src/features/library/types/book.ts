@@ -1,11 +1,22 @@
 export type BookStatus =
   | 'uploaded'
   | 'extracting'
+  | 'generating_transcript'
   | 'initial_sync'
   | 'anchors'
   | 'background_sync'
   | 'ready'
   | 'failed'
+
+export interface BookArtifacts {
+  metadata: boolean
+  pdf: boolean
+  audio: boolean
+  extractedPages: boolean
+  transcript: boolean
+  anchors: boolean
+  synchronization: boolean
+}
 
 export interface ProcessingState {
   status: BookStatus
@@ -38,12 +49,14 @@ export interface Book {
   extractionError?: string
   extractedAt?: string
   createdAt: string
+  updatedAt?: string
   lastReadPage: number
   lastAudioPosition?: number
   playbackSpeed?: number
   lastOpenedAt?: string
   status: BookStatus
   processingState?: ProcessingState
+  artifacts: BookArtifacts
 }
 
 export interface CreateBookInput {

@@ -4,11 +4,16 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/features/library/components/StatusBadge'
+import { normalizeBookArtifacts } from '@/features/library/services/bookStorage.service'
 import type { Book, ProcessingState } from '@/features/library/types/book'
 import { ProgressIndicator } from '@/features/processing/components/ProgressIndicator'
 import { processingService } from '@/features/processing/services/processing.service'
+import { cn } from '@/lib/cn'
 
-export function BookCard({ book, onDelete }: { book: Book; onDelete: (book: Book) => void }) {
+export function BookCard({ book: initialBook, onDelete }: { book: Book; onDelete: (book: Book) => void }) {
+  const book = normalizeBookArtifacts(initialBook)
+  const artifacts = book.artifacts
+
   const [state, setState] = useState<ProcessingState>(
     book.processingState || {
       status: book.status,
@@ -32,7 +37,7 @@ export function BookCard({ book, onDelete }: { book: Book; onDelete: (book: Book
   const uploadedAt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(book.createdAt))
 
   return (
-    <Card className="flex min-h-60 flex-col">
+    <Card className="flex min-h-64 flex-col">
       <div className="flex items-start justify-between gap-4">
         <span className="grid size-10 place-items-center rounded-xl bg-secondary">
           <BookOpen className="size-5" />
@@ -40,14 +45,36 @@ export function BookCard({ book, onDelete }: { book: Book; onDelete: (book: Book
         <StatusBadge status={state.status} />
       </div>
 
-      <div className="mt-4 pt-2">
-        <h2 className="truncate font-semibold">{book.title}</h2>
-        <p className="mt-0.5 truncate text-sm text-muted-foreground">{book.author || 'Unknown author'}</p>
+      <div className="mt-4 pt-1">
+        <h2 className="truncate font-semibold text-base">{book.title}</h2>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{book.author || 'Unknown author'}</p>
+      </div>
+
+      {/* Developer Artifact Status View */}
+      <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl bg-muted/40 p-2 text-[11px] font-medium">
+        <span className={cn('flex items-center gap-1 truncate', artifacts.pdf ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground')}>
+          {artifacts.pdf ? '✓' : '○'} PDF
+        </span>
+        <span className={cn('flex items-center gap-1 truncate', artifacts.audio ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground')}>
+          {artifacts.audio ? '✓' : '○'} Audio
+        </span>
+        <span className={cn('flex items-center gap-1 truncate', artifacts.extractedPages ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground')}>
+          {artifacts.extractedPages ? '✓' : '○'} Pages
+        </span>
+        <span className={cn('flex items-center gap-1 truncate', artifacts.transcript ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground')}>
+          {artifacts.transcript ? '✓' : '○'} Transcript
+        </span>
+        <span className={cn('flex items-center gap-1 truncate', artifacts.anchors ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground')}>
+          {artifacts.anchors ? '✓' : '○'} Anchors
+        </span>
+        <span className={cn('flex items-center gap-1 truncate', artifacts.synchronization ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground')}>
+          {artifacts.synchronization ? '✓' : '○'} Sync
+        </span>
       </div>
 
       {/* Live Processing Progress Bar */}
       {state.status !== 'ready' && (
-        <div className="mt-4">
+        <div className="mt-3">
           <ProgressIndicator progress={state.progress} label={state.currentStep} size="sm" />
         </div>
       )}
@@ -57,7 +84,7 @@ export function BookCard({ book, onDelete }: { book: Book; onDelete: (book: Book
           <CalendarDays className="size-3.5" /> Uploaded {uploadedAt}
         </p>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <Link to={`/reader/${book.id}`}>
             <Button className="w-full">Open</Button>
           </Link>

@@ -2,8 +2,9 @@ import { ArrowLeft, Bookmark, MoreHorizontal, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { TranscriptStatus } from '@/features/transcript/components/TranscriptStatus'
 
-export function ReaderHeader({ title, author }: { title: string; author?: string }) {
+export function ReaderHeader({ bookId, title, author }: { bookId?: string; title: string; author?: string }) {
   return (
     <header className="grid h-20 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-border px-4 sm:px-6">
       <Link
@@ -13,9 +14,12 @@ export function ReaderHeader({ title, author }: { title: string; author?: string
         <ArrowLeft className="size-5" /> <span>Library</span>
       </Link>
 
-      <div className="min-w-0 px-3 text-center">
+      <div className="min-w-0 px-3 text-center flex flex-col items-center gap-0.5">
         <h1 className="truncate text-sm font-semibold sm:text-base">{title}</h1>
-        <p className="truncate text-xs text-muted-foreground">{author || 'Unknown author'}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate text-xs text-muted-foreground">{author || 'Unknown author'}</p>
+          {bookId && <TranscriptStatus bookId={bookId} />}
+        </div>
       </div>
 
       <div className="flex justify-self-end items-center gap-2">

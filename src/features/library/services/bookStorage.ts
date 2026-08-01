@@ -1,9 +1,11 @@
 import type { Book, BookStatus, CreateBookInput, ProcessingState, StoredFile } from '@/features/library/types/book'
+import type { Transcript } from '@/features/transcript/types/transcript'
 import { extractPdfText } from '@/services/pdfExtraction.service'
 
 const DATABASE_NAME = 'echoread'
-const DATABASE_VERSION = 1
+const DATABASE_VERSION = 2
 const BOOK_STORE = 'books'
+const TRANSCRIPT_STORE = 'transcripts'
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -12,6 +14,9 @@ function openDatabase(): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       if (!request.result.objectStoreNames.contains(BOOK_STORE)) {
         request.result.createObjectStore(BOOK_STORE, { keyPath: 'id' })
+      }
+      if (!request.result.objectStoreNames.contains(TRANSCRIPT_STORE)) {
+        request.result.createObjectStore(TRANSCRIPT_STORE, { keyPath: 'bookId' })
       }
     }
     request.onsuccess = () => resolve(request.result)
@@ -142,5 +147,23 @@ export const bookStorage = {
     await requestResult(transaction.objectStore(BOOK_STORE).delete(bookId))
     await transactionComplete(transaction)
     database.close()
+  },
+
+  async getTranscript(bookId: string): Promise<Transcript | undefined> {
+    const database = await openDatabase()
+    const transaction = database.transaction(TRANSCRIPT_STORE, 'readonly')
+    const item = await requestResult<Transcript | undefined>(transaction.objectStore(TRANSCRIPT_STORE).get(bookId))
+    await transactionComplete(transaction)
+    database.close()
+    return item
+  },
+
+  async saveTranscript(transcript: Transcript): Promise<Transcript> {
+    const database = await openDatabase()
+    const transaction = database.transaction(TRANSCRIPT_STORE, 'readwrite')
+    await requestResult(transaction.objectStore(TRANSCRIPT_STORE).put(transcript))
+    await transactionComplete(transaction)
+    database.close()
+    return transcript
   },
 }
