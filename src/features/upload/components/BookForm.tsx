@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { bookStorage } from '@/features/library/services/bookStorage'
+import { processingService } from '@/features/processing/services/processing.service'
 import { FilePicker } from '@/features/upload/components/FilePicker'
 
 type FieldErrors = Partial<Record<'title' | 'pdf' | 'audio', string>>
@@ -35,7 +36,8 @@ export function BookForm() {
     if (Object.keys(nextErrors).length > 0 || !pdfFile || !audioFile) return
     setIsSaving(true)
     try {
-      await bookStorage.create({ title, author, pdfFile, audioFile })
+      const created = await bookStorage.create({ title, author, pdfFile, audioFile })
+      void processingService.startProcessing(created.id)
       toast.success('Book added to your library')
       navigate('/library')
     } catch {

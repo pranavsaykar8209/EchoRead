@@ -1,5 +1,21 @@
 import { useParams } from 'react-router-dom'
-import { Card } from '@/components/ui/Card'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Spinner } from '@/components/ui/Spinner'
-export default function ProcessingPage() { const { bookId } = useParams(); return <><PageHeader title="Preparing your book" description={`Book ${bookId ?? 'unknown'} is queued for future processing capabilities.`} /><Card className="flex min-h-64 items-center justify-center"><Spinner label="Processing will be available soon" /></Card></> }
+import { ProcessingManager } from '@/features/processing/components/ProcessingManager'
+
+export default function ProcessingPage() {
+  const { bookId } = useParams()
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Book Processing Pipeline"
+        description="Monitor the stage lifecycle and background synchronization progress of your book."
+      />
+      {bookId ? (
+        <ProcessingManager bookId={bookId} />
+      ) : (
+        <div className="text-center text-sm text-muted-foreground">No book selected for processing.</div>
+      )}
+    </div>
+  )
+}

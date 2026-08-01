@@ -1,4 +1,4 @@
-import type { Book, CreateBookInput, StoredFile } from '@/features/library/types/book'
+import type { Book, BookStatus, CreateBookInput, ProcessingState, StoredFile } from '@/features/library/types/book'
 import { extractPdfText } from '@/services/pdfExtraction.service'
 
 const DATABASE_NAME = 'echoread'
@@ -108,6 +108,30 @@ export const bookStorage = {
       lastAudioPosition: progress.lastAudioPosition ?? book.lastAudioPosition ?? 0,
       playbackSpeed: progress.playbackSpeed ?? book.playbackSpeed ?? 1,
       lastOpenedAt: new Date().toISOString(),
+    }
+    return saveBook(updated)
+  },
+
+  async updateProcessingState(
+    bookId: string,
+    processingState: Partial<ProcessingState> & { status: BookStatus }
+  ): Promise<Book | undefined> {
+    const book = await this.get(bookId)
+    if (!book) return undefined
+
+    const mergedState: ProcessingState = {
+      status: processingState.status,
+      progress: processingState.progress ?? book.processingState?.progress ?? 0,
+      currentStep: processingState.currentStep ?? book.processingState?.currentStep,
+      startedAt: processingState.startedAt ?? book.processingState?.startedAt ?? new Date().toISOString(),
+      completedAt: processingState.completedAt ?? book.processingState?.completedAt,
+      errorMessage: processingState.errorMessage,
+    }
+
+    const updated: Book = {
+      ...book,
+      status: processingState.status,
+      processingState: mergedState,
     }
     return saveBook(updated)
   },

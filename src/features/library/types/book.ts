@@ -1,4 +1,20 @@
-export type BookStatus = 'uploaded' | 'processing' | 'ready'
+export type BookStatus =
+  | 'uploaded'
+  | 'extracting'
+  | 'initial_sync'
+  | 'anchors'
+  | 'background_sync'
+  | 'ready'
+  | 'failed'
+
+export interface ProcessingState {
+  status: BookStatus
+  progress: number // 0 - 100
+  currentStep?: string
+  startedAt?: string
+  completedAt?: string
+  errorMessage?: string
+}
 
 export interface StoredFile {
   name: string
@@ -27,6 +43,7 @@ export interface Book {
   playbackSpeed?: number
   lastOpenedAt?: string
   status: BookStatus
+  processingState?: ProcessingState
 }
 
 export interface CreateBookInput {

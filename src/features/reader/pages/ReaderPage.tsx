@@ -8,6 +8,7 @@ import { TextReader } from '@/features/reader/components/TextReader'
 import { TextReaderLoading } from '@/features/reader/components/TextReaderLoading'
 import { bookStorage } from '@/features/library/services/bookStorage'
 import type { Book } from '@/features/library/types/book'
+import { ProcessingBanner } from '@/features/processing/components/ProcessingBanner'
 import { useReaderStore } from '@/store/readerStore'
 
 export default function ReaderPage() {
@@ -77,6 +78,7 @@ export default function ReaderPage() {
     <div className={`relative flex min-h-screen bg-background ${isFullscreen ? 'p-0 overflow-hidden' : 'pb-36'}`}>
       <div className="flex min-w-0 flex-1 flex-col">
         {!isFullscreen && <ReaderHeader title={book?.title || 'Loading book…'} author={book?.author} />}
+        {!isFullscreen && book && <ProcessingBanner book={book} />}
 
         <main className={`flex min-h-0 flex-1 flex-col ${isFullscreen ? 'p-0' : 'p-4 sm:p-6'}`}>
           {isBookLoading || isExtracting ? (
