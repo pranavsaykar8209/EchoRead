@@ -1,4 +1,4 @@
-export type BookStatus = 'uploaded'
+export type BookStatus = 'uploaded' | 'processing' | 'ready'
 
 export interface StoredFile {
   name: string

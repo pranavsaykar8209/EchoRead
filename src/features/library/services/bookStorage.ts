@@ -28,12 +28,21 @@ function requestResult<T>(request: IDBRequest<T>): Promise<T> {
   })
 }
 
+function transactionComplete(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve()
+    transaction.onerror = () => reject(transaction.error)
+    transaction.onabort = () => reject(transaction.error)
+  })
+}
+
 /** Browser persistence boundary for the local library; replace this service when a remote backend is added. */
 export const bookStorage = {
   async list(): Promise<Book[]> {
     const database = await openDatabase()
     const transaction = database.transaction(BOOK_STORE, 'readonly')
     const books = await requestResult(transaction.objectStore(BOOK_STORE).getAll())
+    await transactionComplete(transaction)
     database.close()
     return books.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   },
@@ -52,7 +61,16 @@ export const bookStorage = {
     const database = await openDatabase()
     const transaction = database.transaction(BOOK_STORE, 'readwrite')
     await requestResult(transaction.objectStore(BOOK_STORE).add(book))
+    await transactionComplete(transaction)
     database.close()
     return book
+  },
+
+  async remove(bookId: string): Promise<void> {
+    const database = await openDatabase()
+    const transaction = database.transaction(BOOK_STORE, 'readwrite')
+    await requestResult(transaction.objectStore(BOOK_STORE).delete(bookId))
+    await transactionComplete(transaction)
+    database.close()
   },
 }
