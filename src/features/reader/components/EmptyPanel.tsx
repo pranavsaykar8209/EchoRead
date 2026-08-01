@@ -1,0 +1,2 @@
+import type { ReactNode } from 'react'
+export function EmptyPanel({ icon, title, description }: { icon: ReactNode; title: string; description: string }) { return <div className="flex min-h-52 flex-col items-center justify-center px-5 text-center"><div className="text-muted-foreground">{icon}</div><h3 className="mt-3 text-sm font-medium">{title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p></div> }

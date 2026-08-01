@@ -38,6 +38,15 @@ function transactionComplete(transaction: IDBTransaction): Promise<void> {
 
 /** Browser persistence boundary for the local library; replace this service when a remote backend is added. */
 export const bookStorage = {
+  async get(bookId: string): Promise<Book | undefined> {
+    const database = await openDatabase()
+    const transaction = database.transaction(BOOK_STORE, 'readonly')
+    const book = await requestResult(transaction.objectStore(BOOK_STORE).get(bookId))
+    await transactionComplete(transaction)
+    database.close()
+    return book
+  },
+
   async list(): Promise<Book[]> {
     const database = await openDatabase()
     const transaction = database.transaction(BOOK_STORE, 'readonly')
