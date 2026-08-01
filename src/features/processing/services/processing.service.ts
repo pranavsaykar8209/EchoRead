@@ -1,3 +1,4 @@
+import { AppConfig } from '@/config/app.config'
 import { bookStorage } from '@/features/library/services/bookStorage'
 import type { BookStatus, ProcessingState } from '@/features/library/types/book'
 
@@ -53,9 +54,14 @@ class ProcessingService {
       }
 
       const startedAt = book.processingState?.startedAt || new Date().toISOString()
+      const isDev = AppConfig.developmentProcessing
 
       // Stage 1: Extract Text (0 - 20%)
-      await this.updateStage(bookId, 'extracting', 5, 'Extracting text from PDF…', startedAt)
+      const extractMsg = isDev
+        ? `Extracting PDF text (Dev Mode: Max ${AppConfig.maxPages} pages)…`
+        : 'Extracting text from PDF…'
+      await this.updateStage(bookId, 'extracting', 5, extractMsg, startedAt)
+
       if (!book.pages || book.pages.length === 0) {
         await bookStorage.extractPages(book)
       }
@@ -63,13 +69,16 @@ class ProcessingService {
       await this.delay(800)
 
       // Stage 2: Initial Synchronization (20 - 50%)
-      await this.updateStage(bookId, 'initial_sync', 30, 'Performing initial synchronization…', startedAt)
+      const syncMsg = isDev
+        ? `Initial synchronization (Dev Mode: Max ${AppConfig.maxAudioMinutes}m audio)…`
+        : 'Performing initial synchronization…'
+      await this.updateStage(bookId, 'initial_sync', 35, syncMsg, startedAt)
       await this.delay(1000)
       await this.updateStage(bookId, 'initial_sync', 50, 'Initial synchronization ready', startedAt)
       await this.delay(800)
 
       // Stage 3: Audio Anchors (50 - 75%)
-      await this.updateStage(bookId, 'anchors', 60, 'Generating audio navigation anchors…', startedAt)
+      await this.updateStage(bookId, 'anchors', 65, 'Generating audio navigation anchors…', startedAt)
       await this.delay(1000)
       await this.updateStage(bookId, 'anchors', 75, 'Audio anchors generated', startedAt)
       await this.delay(800)
