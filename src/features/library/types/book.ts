@@ -7,12 +7,20 @@ export interface StoredFile {
   blob: Blob
 }
 
+export interface BookPage {
+  pageNumber: number
+  text: string
+}
+
 export interface Book {
   id: string
   title: string
   author?: string
   pdfFile: StoredFile
   audioFile: StoredFile
+  pages?: BookPage[]
+  extractionError?: string
+  extractedAt?: string
   createdAt: string
   lastReadPage: number
   status: BookStatus

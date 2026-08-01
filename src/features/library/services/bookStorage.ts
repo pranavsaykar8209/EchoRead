@@ -1,4 +1,5 @@
 import type { Book, CreateBookInput, StoredFile } from '@/features/library/types/book'
+import { extractPdfText } from '@/services/pdfExtraction.service'
 
 const DATABASE_NAME = 'echoread'
 const DATABASE_VERSION = 1
@@ -36,6 +37,15 @@ function transactionComplete(transaction: IDBTransaction): Promise<void> {
   })
 }
 
+async function saveBook(book: Book): Promise<Book> {
+  const database = await openDatabase()
+  const transaction = database.transaction(BOOK_STORE, 'readwrite')
+  await requestResult(transaction.objectStore(BOOK_STORE).put(book))
+  await transactionComplete(transaction)
+  database.close()
+  return book
+}
+
 /** Browser persistence boundary for the local library; replace this service when a remote backend is added. */
 export const bookStorage = {
   async get(bookId: string): Promise<Book | undefined> {
@@ -67,12 +77,23 @@ export const bookStorage = {
       lastReadPage: 1,
       status: 'uploaded',
     }
-    const database = await openDatabase()
-    const transaction = database.transaction(BOOK_STORE, 'readwrite')
-    await requestResult(transaction.objectStore(BOOK_STORE).add(book))
-    await transactionComplete(transaction)
-    database.close()
-    return book
+    try {
+      const extracted = await extractPdfText(input.pdfFile)
+      book.pages = extracted.pages
+      book.extractedAt = new Date().toISOString()
+    } catch (error) {
+      book.extractionError = error instanceof Error ? error.message : 'Text extraction failed.'
+    }
+    return saveBook(book)
+  },
+
+  async extractPages(book: Book): Promise<Book> {
+    try {
+      const extracted = await extractPdfText(book.pdfFile.blob)
+      return saveBook({ ...book, pages: extracted.pages, extractedAt: new Date().toISOString(), extractionError: undefined })
+    } catch (error) {
+      return saveBook({ ...book, extractionError: error instanceof Error ? error.message : 'Text extraction failed.' })
+    }
   },
 
   async remove(bookId: string): Promise<void> {

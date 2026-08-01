@@ -1,0 +1,3 @@
+export function TextReaderLoading({ label = 'Preparing your book…' }: { label?: string }) {
+  return <div className="flex min-h-100 flex-1 flex-col items-center justify-center rounded-2xl bg-muted/40 p-6"><div className="h-4 w-28 animate-pulse rounded bg-muted" /><div className="mt-8 w-full max-w-2xl space-y-3"><div className="h-5 w-3/4 animate-pulse rounded bg-muted" /><div className="h-5 w-full animate-pulse rounded bg-muted" /><div className="h-5 w-11/12 animate-pulse rounded bg-muted" /><div className="h-5 w-2/3 animate-pulse rounded bg-muted" /></div><p className="mt-8 text-sm text-muted-foreground">{label}</p></div>
+}

@@ -15,10 +15,10 @@
     "@vitejs/plugin-react": "latest",
     "framer-motion": "latest",
     "lucide-react": "latest",
+    "pdfjs-dist": "^6.2.108",
     "react": "latest",
     "react-dom": "latest",
     "react-dropzone": "latest",
-    "react-pdf": "latest",
     "react-router-dom": "latest",
     "sonner": "latest",
     "zustand": "latest"
