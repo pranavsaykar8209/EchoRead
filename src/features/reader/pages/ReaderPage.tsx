@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { AudioControls } from '@/features/reader/components/AudioControls'
+import { AudioPlayer } from '@/features/reader/components/AudioPlayer'
 import { ReaderHeader } from '@/features/reader/components/ReaderHeader'
 import { ReaderNavigation } from '@/features/reader/components/ReaderNavigation'
-import { Sidebar } from '@/features/reader/components/Sidebar'
 import { TextExtractionError } from '@/features/reader/components/TextExtractionError'
 import { TextReader } from '@/features/reader/components/TextReader'
 import { TextReaderLoading } from '@/features/reader/components/TextReaderLoading'
@@ -99,8 +98,7 @@ export default function ReaderPage() {
         </main>
       </div>
 
-      {!isFullscreen && <Sidebar />}
-      {!isFullscreen && <AudioControls pageText={page?.text} />}
+      {!isFullscreen && book && <AudioPlayer book={book} />}
     </div>
   )
 }

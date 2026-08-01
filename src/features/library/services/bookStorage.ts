@@ -96,6 +96,22 @@ export const bookStorage = {
     }
   },
 
+  async updateProgress(
+    bookId: string,
+    progress: { lastReadPage?: number; lastAudioPosition?: number; playbackSpeed?: number }
+  ): Promise<Book | undefined> {
+    const book = await this.get(bookId)
+    if (!book) return undefined
+    const updated: Book = {
+      ...book,
+      lastReadPage: progress.lastReadPage ?? book.lastReadPage,
+      lastAudioPosition: progress.lastAudioPosition ?? book.lastAudioPosition ?? 0,
+      playbackSpeed: progress.playbackSpeed ?? book.playbackSpeed ?? 1,
+      lastOpenedAt: new Date().toISOString(),
+    }
+    return saveBook(updated)
+  },
+
   async remove(bookId: string): Promise<void> {
     const database = await openDatabase()
     const transaction = database.transaction(BOOK_STORE, 'readwrite')

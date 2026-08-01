@@ -23,6 +23,9 @@ export interface Book {
   extractedAt?: string
   createdAt: string
   lastReadPage: number
+  lastAudioPosition?: number
+  playbackSpeed?: number
+  lastOpenedAt?: string
   status: BookStatus
 }
 

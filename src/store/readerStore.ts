@@ -30,7 +30,7 @@ export const useReaderStore = create<ReaderStore>()((set, get) => ({
   isPlaying: false,
   playbackRate: 1,
   autoScrollEnabled: true,
-  focusMode: false,
+  focusMode: true,
   isFullscreen: false,
   setCurrentPage: (currentPage) => {
     const { totalPages } = get()

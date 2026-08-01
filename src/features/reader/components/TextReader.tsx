@@ -6,15 +6,39 @@ import type { BookPage } from '@/features/library/types/book'
 import { useReaderStore } from '@/store/readerStore'
 import { cn } from '@/lib/cn'
 
-function paragraphs(text: string) {
-  return text
-    .split(/\n{2,}/)
-    .map((p) => p.replace(/\n/g, ' ').trim())
+/**
+ * Intelligently splits page text into comfortable, digestible reading chunks (~200 chars or by sentence boundaries).
+ */
+function extractChunks(rawText?: string): string[] {
+  if (!rawText) return []
+  const text = rawText.replace(/\r\n/g, '\n').trim()
+  if (!text) return []
+
+  const sentences = text
+    .split(/(?<=[.!?])\s+|\n{2,}/)
+    .map((s) => s.replace(/\n/g, ' ').trim())
     .filter(Boolean)
+
+  if (sentences.length === 0) return [text]
+
+  const chunks: string[] = []
+  let current = ''
+
+  for (const sentence of sentences) {
+    if (current.length + sentence.length > 250 && current.length > 0) {
+      chunks.push(current.trim())
+      current = sentence
+    } else {
+      current = current ? `${current} ${sentence}` : sentence
+    }
+  }
+  if (current.trim()) chunks.push(current.trim())
+
+  return chunks.length > 0 ? chunks : [text]
 }
 
 export function TextReader({ page, title }: { page?: BookPage; title: string }) {
-  const content = page ? paragraphs(page.text) : []
+  const chunks = extractChunks(page?.text)
   const {
     activeParagraphIndex,
     setActiveParagraphIndex,
@@ -26,23 +50,25 @@ export function TextReader({ page, title }: { page?: BookPage; title: string }) 
     toggleFullscreen,
   } = useReaderStore()
 
-  const paragraphRefs = useRef<(HTMLDivElement | null)[]>([])
+  const activeElRef = useRef<HTMLDivElement | null>(null)
 
-  // Auto-scroll to active paragraph whenever activeParagraphIndex changes
+  // Ensure active index stays in valid range when page changes
   useEffect(() => {
-    if (!autoScrollEnabled || content.length === 0) return
-    const activeEl = paragraphRefs.current[activeParagraphIndex]
-    if (activeEl) {
-      activeEl.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
+    if (activeParagraphIndex >= chunks.length && chunks.length > 0) {
+      setActiveParagraphIndex(0)
     }
-  }, [activeParagraphIndex, autoScrollEnabled, content.length])
+  }, [chunks.length, activeParagraphIndex, setActiveParagraphIndex])
 
-  const handleParagraphClick = (index: number) => {
-    setActiveParagraphIndex(index)
-  }
+  // Auto-scroll when active paragraph changes
+  useEffect(() => {
+    if (!autoScrollEnabled || !activeElRef.current) return
+    activeElRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    })
+  }, [activeParagraphIndex, autoScrollEnabled])
+
+  const activeChunk = chunks[activeParagraphIndex] || chunks[0] || ''
 
   return (
     <article
@@ -91,10 +117,10 @@ export function TextReader({ page, title }: { page?: BookPage; title: string }) 
                 'h-8 gap-1.5 rounded-lg px-2.5 text-xs transition-colors',
                 focusMode ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'
               )}
-              title="Focus Mode: Highlight active content while dimming other text"
+              title="Focus Mode: Only display the active reading content"
             >
               {focusMode ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-              <span>Focus Mode</span>
+              <span>{focusMode ? 'Focus View (Single Chunk)' : 'Full Page View'}</span>
             </Button>
 
             {/* Full Screen Mode Toggle */}
@@ -123,31 +149,44 @@ export function TextReader({ page, title }: { page?: BookPage; title: string }) 
             {title}
           </h2>
 
-          {content.length > 0 ? (
-            <div className="mt-8 space-y-8 text-center text-xl leading-relaxed sm:text-2xl sm:leading-loose">
-              {content.map((paragraph, index) => {
-                const isActive = index === activeParagraphIndex
-                return (
-                  <div
-                    key={`${page?.pageNumber}-${index}`}
-                    ref={(el) => {
-                      paragraphRefs.current[index] = el
-                    }}
-                    onClick={() => handleParagraphClick(index)}
-                    className={cn(
-                      'cursor-pointer py-2 transition-all duration-300 text-center select-text',
-                      isActive
-                        ? 'text-foreground font-semibold opacity-100 scale-[1.02]'
-                        : focusMode
-                        ? 'text-muted-foreground/60 opacity-40 hover:opacity-90 hover:text-foreground'
-                        : 'text-foreground/80 opacity-80 hover:opacity-100 hover:text-foreground'
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap">{paragraph}</p>
-                  </div>
-                )
-              })}
-            </div>
+          {chunks.length > 0 ? (
+            focusMode ? (
+              /* FOCUSED CHUNK MODE: Only active reading section is displayed */
+              <div className="mt-10 flex flex-col items-center justify-center space-y-6">
+                <div
+                  ref={activeElRef}
+                  className="w-full max-w-2xl text-center text-2xl font-medium leading-relaxed text-foreground transition-all duration-300 sm:text-3xl sm:leading-loose"
+                >
+                  <p className="whitespace-pre-wrap">{activeChunk}</p>
+                </div>
+
+                <div className="text-xs font-medium text-muted-foreground/80 tabular-nums">
+                  Section {activeParagraphIndex + 1} of {chunks.length}
+                </div>
+              </div>
+            ) : (
+              /* FULL PAGE VIEW: Displays all chunks with active section highlighted */
+              <div className="mt-10 space-y-8 text-center text-xl leading-relaxed sm:text-2xl sm:leading-loose">
+                {chunks.map((chunk, index) => {
+                  const isActive = index === activeParagraphIndex
+                  return (
+                    <div
+                      key={`${page?.pageNumber}-${index}`}
+                      ref={isActive ? activeElRef : null}
+                      onClick={() => setActiveParagraphIndex(index)}
+                      className={cn(
+                        'cursor-pointer py-2 transition-all duration-300 text-center select-text',
+                        isActive
+                          ? 'text-foreground font-semibold opacity-100 scale-[1.02]'
+                          : 'text-foreground/75 opacity-60 hover:opacity-100 hover:text-foreground'
+                      )}
+                    >
+                      <p className="whitespace-pre-wrap">{chunk}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            )
           ) : (
             <div className="mt-12 text-center text-base leading-6 text-muted-foreground">
               This page contains no readable text content.

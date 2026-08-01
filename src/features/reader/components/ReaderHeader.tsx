@@ -1,12 +1,9 @@
-import { ArrowLeft, Bookmark, Maximize2, Minimize2, MoreHorizontal, Search } from 'lucide-react'
+import { ArrowLeft, Bookmark, MoreHorizontal, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { useReaderStore } from '@/store/readerStore'
 
 export function ReaderHeader({ title, author }: { title: string; author?: string }) {
-  const { isFullscreen, toggleFullscreen } = useReaderStore()
-
   return (
     <header className="grid h-20 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-border px-4 sm:px-6">
       <Link
@@ -24,19 +21,6 @@ export function ReaderHeader({ title, author }: { title: string; author?: string
       <div className="flex justify-self-end items-center gap-2">
         <ThemeToggle compact />
 
-        {/* Fullscreen Mode Button */}
-        <Button
-          type="button"
-          variant="secondary"
-          className="h-9 gap-2 border border-border bg-card px-3"
-          aria-label={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
-          title={isFullscreen ? 'Exit Full Screen (Esc)' : 'Enter Full Screen (Full book view)'}
-          onClick={toggleFullscreen}
-        >
-          {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-          <span className="hidden xl:inline">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
-        </Button>
-
         <Button
           type="button"
           variant="secondary"
@@ -47,6 +31,7 @@ export function ReaderHeader({ title, author }: { title: string; author?: string
           <Search className="size-4" />
           <span className="hidden xl:inline">Search</span>
         </Button>
+
         <Button
           type="button"
           variant="secondary"
@@ -57,6 +42,7 @@ export function ReaderHeader({ title, author }: { title: string; author?: string
           <Bookmark className="size-4" />
           <span className="hidden xl:inline">Bookmarks</span>
         </Button>
+
         <Button
           type="button"
           variant="secondary"
