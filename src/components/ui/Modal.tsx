@@ -1,0 +1,4 @@
+import type { PropsWithChildren, ReactNode } from 'react'
+import { X } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+export function Modal({ open, onClose, title, children }: PropsWithChildren<{ open: boolean; onClose: () => void; title: string }>) { if (!open) return null; return <div role="presentation" className="fixed inset-0 z-50 grid place-items-center bg-foreground/20 p-4" onMouseDown={onClose}><section role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl" onMouseDown={(e) => e.stopPropagation()}><div className="mb-4 flex items-center justify-between"><h2 className="font-semibold">{title}</h2><Button variant="ghost" aria-label="Close modal" onClick={onClose} className="size-8 px-0"><X className="size-4" /></Button></div>{children}</section></div> }
